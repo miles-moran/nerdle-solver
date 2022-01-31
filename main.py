@@ -1,5 +1,8 @@
-operators = ['+', "="]
-numbers = [0, 1, 2]
+from turtle import pos
+
+
+operators = ["="]
+numbers = [0]
 all = numbers + operators
 possibles = {
     0: all,
@@ -12,42 +15,45 @@ possibles = {
     7: all
 }
 
+def find(s, ch):
+    return [i for i, ltr in enumerate(s) if ltr == ch]
+
 def isValidEquation(equation):
+    eq = ''.join(equation)
+    equals = find(eq, '=')
+    if len(equals) != 1:
+        return False
     valid = False
     try:
-        eq = ''.join(equation)
         eq = eq.split("=")
         if eval(eq[0]) == eval(eq[1]):
             valid = True
     except:
         valid = False
-   
     return valid
 
-equation = ['', '', '', '', '', '', '', '']
+equation = ['', '', ''] 
 guess = None
-for i in range(0, 8):
-    if guess is not None:
-        break
-    pis = possibles[i]
-    for pi in pis:
-        if guess is not None:
-            break
-        equation[i] = str(pi)
-        for j in range(i + 1, 8):
-            if guess is not None:
-                break
-            pjs = possibles[j]
-            for pj in pjs:
-                if guess is not None:
-                    break
-                equation[j] = str(pj)
-            if j == 7:
-                print(equation)
-                if isValidEquation(equation) == True:
-                    guess = equation
-                    break
+b = 0
 
+def test(r = 0):
+    global b
+    global guess
+    if r == len(equation):
+        return
+    for i in possibles[r]:
+        equation[r] = str(i)
+        if r == len(equation) - 1:
+            print(equation)
+            b += 1
+            if isValidEquation(equation) == True:
+                guess = ''.join(equation)
+                print('guess found', guess)
+        test(r + 1)
 
+test()
+print(b)
 print(guess)
+
+
 
