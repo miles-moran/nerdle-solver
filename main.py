@@ -1,18 +1,45 @@
-from turtle import pos
+from pprint import pprint
 
-
-operators = ["="]
-numbers = [0]
+operators = ["=", "+", "-", '*']
+numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 all = numbers + operators
-possibles = {
-    0: all,
+
+
+def getFreshFeedback():
+    return {
+    "greens": {
+        0: None,
+        1: None,
+        2: None,
+        3: None,
+        4: None,
+        5: None,
+        6: None,
+        7: None,
+    },
+    "grays": [],
+    "yellows": {
+        0: [],
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: [],
+        6: [],
+        7: [],
+    }
+}
+
+def getFreshPossibles():
+    return {
+    0: numbers + ["-"],
     1: all,
     2: all,
     3: all,
     4: all,
     5: all,
     6: all,
-    7: all
+    7: numbers
 }
 
 def find(s, ch):
@@ -21,6 +48,7 @@ def find(s, ch):
 def isValidEquation(equation):
     eq = ''.join(equation)
     equals = find(eq, '=')
+
     if len(equals) != 1:
         return False
     valid = False
@@ -32,28 +60,106 @@ def isValidEquation(equation):
         valid = False
     return valid
 
-equation = ['', '', ''] 
-guess = None
-b = 0
 
-def test(r = 0):
-    global b
-    global guess
-    if r == len(equation):
-        return
-    for i in possibles[r]:
-        equation[r] = str(i)
-        if r == len(equation) - 1:
-            print(equation)
-            b += 1
-            if isValidEquation(equation) == True:
-                guess = ''.join(equation)
-                print('guess found', guess)
-        test(r + 1)
+def getFilteredPossibles(i, pos, eq):
+    ops = ['+', '/', '*', '=']
+    filtered = list(pos[i])
+    if i > 0:
+        previous = eq[i-1]
+        #if the previous character is +, *, / or =, it this character must be a number or negative
+        if previous in ops:
+            filtered = list(filter(lambda x: x not in ops, filtered))
+        #if the previous character is a -, this character must be a number
+        elif previous == "-":
+            filtered = list(filter(lambda x: x in numbers, filtered))
+        #if any previous character is an equals sign, this character cannot be an equal sign
+        if "=" in eq[:i-1]:
+            filtered = list(filter(lambda x: x != "=", filtered))
+        if i > 3:
+            numbersInLast4Spaces = list(filter(lambda x: x in numbers, eq[i-4:i]))
+            #if last 4 items are numbers, next cannot be number
+            if len(numbersInLast4Spaces) >= 4:
+                filtered = list(filter(lambda x: x not in numbers, filtered))
+        if i > 2:
+            twoback = eq[i-2]
+            #a
+    
+        
+        
+    return filtered
 
-test()
-print(b)
-print(guess)
+def getFeedback(solution, guess, feedback = getFreshFeedback()):
+    for i in range(0, 8):
+        g = guess[i]
+        if g not in solution and g not in feedback['grays']:
+            feedback['grays'].append(g)
+        else:
+            for j in range(0, 8):
+                s = solution[j]
+                if i == j and s == g:
+                    feedback['greens'][i] = g
+                elif i != j and s == g and g not in feedback['yellows'][i]:
+                    feedback['yellows'][i].append(g)
+
+    return feedback
+
+def applyFeedback(feedback, pos):
+    for i in range(0, 8):
+        if feedback['greens'][i] is not None:
+            pos[i] = [feedback['greens'][i]]
+        for y in feedback['yellows'][i]:
+            if y in pos[i]:
+                pos[i] = list(filter(lambda x: x!= y, pos[i]))
+        for g in feedback['grays']:
+            pos[i] = list(filter(lambda x: x!= g, pos[i]))
 
 
+    return pos
 
+def attempt(solution):
+    attempts = []
+    equation = ['', '', '', '', '', '', '', ''] 
+    guess = None
+    best = None
+    possibles = getFreshPossibles()
+    def solve(possibles, r = 0, a = 1):
+        global guess
+        global best
+        if (a == 1):
+            guess = '1+2=6-03'
+        if r == len(equation):
+            return
+        for i in getFilteredPossibles(r, possibles, equation):
+            if guess is not None:
+                return guess
+            equation[r] = str(i)
+            if r == len(equation) - 1:
+                if isValidEquation(equation) == True:
+                    g = ''.join(equation)
+                    if best is None or len(set(g)) > len(set(best)):
+                        best = g
+                        if a == 1:
+                            print(best)
+                            if len(set(best)) == 8:
+                                guess = ''.join(equation)
+                    print('guess found', g)
+                    
+            solve(possibles, r + 1)
+    answer = None
+    feedback = getFreshFeedback()
+    while answer is None:
+        g = solve(possibles)
+        print(g)
+        feedback = getFeedback(solution, guess)
+        possibles = applyFeedback(feedback, possibles)
+        attempts.append({
+            'guess': guess,
+            'feedback': feedback
+        })
+        if g == solution:
+            answer = g
+
+    return attempts
+
+attempts = attempt('1+2=06-3')
+print(len(attempts))
