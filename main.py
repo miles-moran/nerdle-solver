@@ -144,22 +144,19 @@ def attempt(feedback):
         return best
     return guess
 
-solution = "3-7*1=-4"
-guess = '1=4-6+03'
-print('-1-')
-print(guess)
-feedback = getFeedback(solution, guess)
-possibles = applyFeedback(feedback, possibles)
-guess = '01=2*5-9'
-print('-2-')
-print(guess)
-feedback = getFeedback(solution, guess)
-possibles = applyFeedback(feedback, possibles)
-guess = attempt(feedback)
-print('-3-')
-print(guess)
-feedback = getFeedback(solution, guess)
-possibles = applyFeedback(feedback, possibles)
-guess = attempt(feedback)
-print('-4-')
-print(guess)
+solution = "5*5=25*1"
+answer = None
+guess = None
+a = 0
+while answer is None:
+    if a == 0:
+        guess = '1=4-6+03'
+    else:
+        guess = attempt(feedback)
+    print('Attempt: ' + str(a+1))
+    print(guess)
+    feedback = getFeedback(solution, guess)
+    possibles = applyFeedback(feedback, possibles)
+    if guess == solution:
+        answer = guess
+    a += 1
