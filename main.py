@@ -21,7 +21,6 @@ def find(s, ch):
 def isValidEquation(equation):
     eq = ''.join(equation)
     equals = find(eq, '=')
-
     if len(equals) != 1:
         return False
     valid = False
@@ -54,8 +53,6 @@ def getFilteredPossibles(i, pos, eq):
             if len(numbersInLast4Spaces) >= 4:
                 filtered = list(filter(lambda x: x not in numbers, filtered))
     
-        
-        
     return filtered
 
 def getFeedback(solution, guess, feedback = {
@@ -92,7 +89,6 @@ def getFeedback(solution, guess, feedback = {
                     feedback['greens'][i] = g
                 elif i != j and s == g and g not in feedback['yellows'][i]: #fix this
                     feedback['yellows'][i].append(g)
-    pprint(feedback)
     return feedback
 
 def applyFeedback(feedback, pos):
@@ -106,7 +102,18 @@ def applyFeedback(feedback, pos):
             pos[i] = [feedback['greens'][i]]
     return pos
 
-def attempt():
+def meetsCriteria(eq, feedback):
+    valid = True
+    mustHaves = []
+    for f in feedback['yellows']:
+        mustHaves += feedback['yellows'][f]
+    for m in mustHaves:
+        if m not in eq:
+            return False
+    return valid
+
+
+def attempt(feedback):
     equation = ['', '', '', '', '', '', '', ''] 
     global guess
     global best
@@ -122,7 +129,8 @@ def attempt():
                 return guess
             equation[r] = str(i)
             if r == len(equation) - 1:
-                if isValidEquation(equation) == True:
+                #equation must have every unique number from yellows
+                if isValidEquation(equation) == True and meetsCriteria(equation, feedback) == True:
                     g = ''.join(equation)
                     if best is None or len(set(g)) > len(set(best)):
                         best = g
@@ -136,7 +144,7 @@ def attempt():
         return best
     return guess
 
-solution = "29-10=19"
+solution = "3-7*1=-4"
 guess = '1=4-6+03'
 print('-1-')
 print(guess)
@@ -147,13 +155,11 @@ print('-2-')
 print(guess)
 feedback = getFeedback(solution, guess)
 possibles = applyFeedback(feedback, possibles)
-pprint(possibles)
-guess = attempt()
+guess = attempt(feedback)
 print('-3-')
 print(guess)
 feedback = getFeedback(solution, guess)
 possibles = applyFeedback(feedback, possibles)
-guess = attempt()
+guess = attempt(feedback)
 print('-4-')
 print(guess)
-
