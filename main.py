@@ -90,19 +90,20 @@ def getFeedback(solution, guess, feedback = {
                 s = solution[j]
                 if i == j and s == g:
                     feedback['greens'][i] = g
-                elif i != j and s == g and g not in feedback['yellows'][i]:
+                elif i != j and s == g and g not in feedback['yellows'][i]: #fix this
                     feedback['yellows'][i].append(g)
+    pprint(feedback)
     return feedback
 
 def applyFeedback(feedback, pos):
     for i in range(0, 8):
-        if feedback['greens'][i] is not None:
-            pos[i] = [feedback['greens'][i]]
         for y in feedback['yellows'][i]:
             if y in pos[i]:
                 pos[i] = list(filter(lambda x: x!= y, pos[i]))
         for g in feedback['grays']:
             pos[i] = list(filter(lambda x: x!= g, pos[i]))
+        if feedback['greens'][i] is not None:
+            pos[i] = [feedback['greens'][i]]
     return pos
 
 def attempt():
