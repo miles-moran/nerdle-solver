@@ -4,34 +4,7 @@ operators = ["=", "+", "-", '*']
 numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 all = numbers + operators
 
-
-def getFreshFeedback():
-    return {
-    "greens": {
-        0: None,
-        1: None,
-        2: None,
-        3: None,
-        4: None,
-        5: None,
-        6: None,
-        7: None,
-    },
-    "grays": [],
-    "yellows": {
-        0: [],
-        1: [],
-        2: [],
-        3: [],
-        4: [],
-        5: [],
-        6: [],
-        7: [],
-    }
-}
-
-def getFreshPossibles():
-    return {
+possibles = {
     0: numbers + ["-"],
     1: all,
     2: all,
@@ -80,15 +53,34 @@ def getFilteredPossibles(i, pos, eq):
             #if last 4 items are numbers, next cannot be number
             if len(numbersInLast4Spaces) >= 4:
                 filtered = list(filter(lambda x: x not in numbers, filtered))
-        if i > 2:
-            twoback = eq[i-2]
-            #a
     
         
         
     return filtered
 
-def getFeedback(solution, guess, feedback = getFreshFeedback()):
+def getFeedback(solution, guess, feedback = {
+    "greens": {
+        0: None,
+        1: None,
+        2: None,
+        3: None,
+        4: None,
+        5: None,
+        6: None,
+        7: None,
+    },
+    "grays": [],
+    "yellows": {
+        0: [],
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: [],
+        6: [],
+        7: [],
+    }
+}):
     for i in range(0, 8):
         g = guess[i]
         if g not in solution and g not in feedback['grays']:
@@ -100,7 +92,6 @@ def getFeedback(solution, guess, feedback = getFreshFeedback()):
                     feedback['greens'][i] = g
                 elif i != j and s == g and g not in feedback['yellows'][i]:
                     feedback['yellows'][i].append(g)
-
     return feedback
 
 def applyFeedback(feedback, pos):
@@ -112,21 +103,17 @@ def applyFeedback(feedback, pos):
                 pos[i] = list(filter(lambda x: x!= y, pos[i]))
         for g in feedback['grays']:
             pos[i] = list(filter(lambda x: x!= g, pos[i]))
-
-
     return pos
 
-def attempt(solution):
-    attempts = []
+def attempt():
     equation = ['', '', '', '', '', '', '', ''] 
+    global guess
+    global best
     guess = None
     best = None
-    possibles = getFreshPossibles()
     def solve(possibles, r = 0, a = 1):
         global guess
         global best
-        if (a == 1):
-            guess = '1+2=6-03'
         if r == len(equation):
             return
         for i in getFilteredPossibles(r, possibles, equation):
@@ -139,27 +126,33 @@ def attempt(solution):
                     if best is None or len(set(g)) > len(set(best)):
                         best = g
                         if a == 1:
-                            print(best)
                             if len(set(best)) == 8:
                                 guess = ''.join(equation)
-                    print('guess found', g)
                     
             solve(possibles, r + 1)
-    answer = None
-    feedback = getFreshFeedback()
-    while answer is None:
-        g = solve(possibles)
-        print(g)
-        feedback = getFeedback(solution, guess)
-        possibles = applyFeedback(feedback, possibles)
-        attempts.append({
-            'guess': guess,
-            'feedback': feedback
-        })
-        if g == solution:
-            answer = g
+    solve(possibles)
+    if guess is None and best is not None:
+        return best
+    return guess
 
-    return attempts
+solution = "29-10=19"
+guess = '1=4-6+03'
+print('-1-')
+print(guess)
+feedback = getFeedback(solution, guess)
+possibles = applyFeedback(feedback, possibles)
+guess = '01=2*5-9'
+print('-2-')
+print(guess)
+feedback = getFeedback(solution, guess)
+possibles = applyFeedback(feedback, possibles)
+pprint(possibles)
+guess = attempt()
+print('-3-')
+print(guess)
+feedback = getFeedback(solution, guess)
+possibles = applyFeedback(feedback, possibles)
+guess = attempt()
+print('-4-')
+print(guess)
 
-attempts = attempt('1+2=06-3')
-print(len(attempts))
