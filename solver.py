@@ -1,19 +1,8 @@
 from pprint import pprint
+import re
 
 operators = ["=", "+", "-", '*']
 numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-all = numbers + operators
-
-possibles = {
-    0: numbers + ["-"],
-    1: all,
-    2: all,
-    3: all,
-    4: all,
-    5: all,
-    6: all,
-    7: numbers
-}
 
 def find(s, ch):
     return [i for i, ltr in enumerate(s) if ltr == ch]
@@ -26,6 +15,8 @@ def isValidEquation(equation):
     valid = False
     try:
         eq = eq.split("=")
+        eq[0] = re.sub(r'\b0+(?!\b)', '', eq[0])
+        eq[1] = re.sub(r'\b0+(?!\b)', '', eq[1])
         if eval(eq[0]) == eval(eq[1]):
             valid = True
     except:
@@ -52,10 +43,10 @@ def getFilteredPossibles(i, pos, eq):
             #if last 4 items are numbers, next cannot be number
             if len(numbersInLast4Spaces) >= 4:
                 filtered = list(filter(lambda x: x not in numbers, filtered))
-    
     return filtered
 
-def getFeedback(solution, guess, feedback = {
+def getFreshFeedback():
+    return {
     "greens": {
         0: None,
         1: None,
@@ -77,19 +68,42 @@ def getFeedback(solution, guess, feedback = {
         6: [],
         7: [],
     }
-}):
+}
+
+def getFreshPossibles():
+    all = numbers + operators
+    return {
+        0: numbers + ["-"],
+        1: all,
+        2: all,
+        3: all,
+        4: all,
+        5: all,
+        6: all,
+        7: numbers
+    }
+
+def getFeedbackAndColors(solution, guess, feedback):
+    colors = ['', '', '', '', '', '', '', '']
     for i in range(0, 8):
         g = guess[i]
-        if g not in solution and g not in feedback['grays']:
-            feedback['grays'].append(g)
-        else:
-            for j in range(0, 8):
-                s = solution[j]
-                if i == j and s == g:
-                    feedback['greens'][i] = g
-                elif i != j and s == g and g not in feedback['yellows'][i]: #fix this
-                    feedback['yellows'][i].append(g)
-    return feedback
+        s = solution[i]
+        if g not in solution:
+            if g not in feedback['grays']:
+                feedback['grays'].append(g)
+            colors[i] = 'gray'
+        
+        if g in solution:
+            if s == g:
+                feedback['greens'][i] = g
+                colors[i] = 'green'
+            else:
+                feedback['yellows'][i].append(g)
+                colors[i] = 'yellow'
+    return {
+        "f": feedback,
+        "c": colors
+    }
 
 def applyFeedback(feedback, pos):
     for i in range(0, 8):
@@ -113,50 +127,46 @@ def meetsCriteria(eq, feedback):
     return valid
 
 
-def attempt(feedback):
+def attempt(feedback, possibles):
     equation = ['', '', '', '', '', '', '', ''] 
-    global guess
-    global best
-    guess = None
-    best = None
-    def solve(possibles, r = 0, a = 1):
-        global guess
-        global best
+    def solve(possibles, r = 0):
         if r == len(equation):
             return
         for i in getFilteredPossibles(r, possibles, equation):
-            if guess is not None:
-                return guess
             equation[r] = str(i)
             if r == len(equation) - 1:
-                #equation must have every unique number from yellows
                 if isValidEquation(equation) == True and meetsCriteria(equation, feedback) == True:
-                    g = ''.join(equation)
-                    if best is None or len(set(g)) > len(set(best)):
-                        best = g
-                        if a == 1:
-                            if len(set(best)) == 8:
-                                guess = ''.join(equation)
-                    
-            solve(possibles, r + 1)
-    solve(possibles)
-    if guess is None and best is not None:
-        return best
-    return guess
+                    return ''.join(equation)
+            guess = solve(possibles, r + 1)
+            if guess is not None:
+                return guess
+    return solve(possibles)
 
-solution = "5*5=25*1"
-answer = None
-guess = None
-a = 0
-while answer is None:
-    if a == 0:
-        guess = '1=4-6+03'
-    else:
-        guess = attempt(feedback)
-    print('Attempt: ' + str(a+1))
-    print(guess)
-    feedback = getFeedback(solution, guess)
-    possibles = applyFeedback(feedback, possibles)
-    if guess == solution:
-        answer = guess
-    a += 1
+def solve(solution, FIRST_GUESS = '6-1+2=03'):
+    numbers.sort(key=lambda x: x in FIRST_GUESS, reverse=False)
+    answer = None
+    guess = None
+    a = 0
+    attempts = []
+    possibles = getFreshPossibles()
+    feedback = getFreshFeedback()
+    while answer is None:
+        if a == 0:
+            guess = FIRST_GUESS
+        else:
+            guess = attempt(feedback, possibles)
+        print('-----')
+        print(guess)
+        feedbackAndColors = getFeedbackAndColors(solution, guess, feedback)
+        feedback = feedbackAndColors['f']
+        colors = feedbackAndColors['c']
+        possibles = applyFeedback(feedback, possibles)
+        attempts.append({
+            "feedback": feedback,
+            "guess": guess,
+            'colors': colors
+        })
+        if guess == solution:
+            answer = guess
+        a += 1
+    return attempts
